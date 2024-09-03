@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Web server
+  web:
+    image: nginx:latest
+    container_name: php-app-web
+    ports:
+      - "80:80"
+    volumes:
+      - ./public:/var/www
+      - ./app:/var/www/app
+      - ./config:/var/www/config
+      - ./vendor:/var/www/vendor
+      - ./logs/nginx:/var/log/nginx
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - app-network
+
+  # PHP-FPM service
+  php:
+    image: php:8.1-fpm
+    container_name: php-app-php
+    volumes:
+      - ./public:/var/www
+      - ./app:/var/www/app
+      - ./config:/var/www/config
+      - ./vendor:/var/www/vendor
+      - ./logs/nginx:/var/log/nginx
+
+    networks:
+      - app-network
+
+  # MySQL database service
+  db:
+    image: mysql:8.0
+    container_name: php-app-db
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD} 
+    env_file:
+        - ./.env
+    networks:
+      - app-network
+      
+
+volumes:
+  db_data:
+
+networks:
+  app-network:
+    driver: bridge
